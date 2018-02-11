@@ -4,7 +4,8 @@ const cheerio = require('cheerio')
 const fs = require('fs-extra')
 const path = require('path')
 
-let url = 'http://www.mmjpg.com/tag/meitui/'
+let homeURL = 'http://www.mmjpg.com/tag/meitui/'
+let desDir = 'dest'
 
 /**
  * 底层基本函数：随机产生[min, max]区间的整数
@@ -19,8 +20,13 @@ function rInt(min, max) {
 
 /**
  * 获取图集的URL
+ *
+ * @async
+ * @function getUrl
+ * @param {string} url - The URL to download from.
+ * @return {Promise<array>} The data from the URL.
  */
-async function getUrl() {
+async function getUrl(url) {
     let linkArr = []
     for (let i = 1; i <= 10; i++) {
         const res = await request.get(url + i)
@@ -35,6 +41,9 @@ async function getUrl() {
 
 /**
  * 获取图集中的图片
+ *
+ * @async
+ * @function getPic
  * @param {String} url 图集URL
  */
 async function getPic(url) {
@@ -42,8 +51,17 @@ async function getPic(url) {
     const $ = cheerio.load(res.text)
     // 以图集名称来分目录
     const dir = $('.article h2').text()
-    console.log(`创建${dir}文件夹`)
-    await fs.mkdir(path.join(__dirname, '/mm', dir))
+    try {
+        console.log(`创建文件夹:${dir}`)
+        await fs.mkdir(path.join(__dirname, desDir))
+        await fs.mkdir(path.join(__dirname, desDir, dir))
+    } catch(e) {
+        if (e && e.code === 'EEXIST') {
+            console.log('目录已存在：', e.path)
+        } else {
+            console.error(e)
+        }
+    }
     const pageCount = parseInt($('#page .ch.all').prev().text())
     for (let i = 1; i <= pageCount; i++) {
         let pageUrl = url + '/' + i
@@ -56,16 +74,34 @@ async function getPic(url) {
     }
 }
 
-// 下载图片
+/**
+ * 图片下载
+ *
+ * @param {String} 图片要保存的目录
+ * @param {String} 要下载的图片路径
+ */
 function download(dir, imgUrl) {
-    console.log(`正在下载${imgUrl}`)
+    console.log(`正在下载: ${imgUrl}`)
     const filename = imgUrl.split('/').pop()
-    const req = request.get(imgUrl)
-        .set({ 'Referer': 'http://www.mmjpg.com' })
-    req.pipe(fs.createWriteStream(path.join(__dirname, 'mm', dir, filename)))
+    const writeStream = fs.createWriteStream(path.join(__dirname, desDir, dir, filename))
+    // writeStream 错误捕获
+    writeStream.on('error', function(err) {
+        console.log('文件生成失败！相关失败信息：', err)
+    })
+    // writeStream 完成捕获
+    writeStream.on('finish', function() {
+        console.log(`下载完成: ${imgUrl}`)
+    })
+    const req = request.get(imgUrl).set({ 'Referer': 'http://www.mmjpg.com' })
+    req.pipe(writeStream)
 }
 
-// sleep函数
+/**
+ * sleep函数
+ *
+ * @param {Number} time - 指定毫秒
+ * @return {Promise<any>}
+ */
 function sleep(time) {
     return new Promise(function (resolve, reject) {
         setTimeout(function () {
@@ -74,11 +110,19 @@ function sleep(time) {
     })
 }
 
+/**
+ * 初始化函数
+ *
+ * @async
+ * @function init
+ */
 async function init(){
-    let urls = await getUrl()
+    let urls = await getUrl(homeURL)
+    console.log('图片总数：', urls.length)
     for (let url of urls) {
-      await getPic(url)
+        await getPic(url)
     }
 }
 
+// 启动
 init()

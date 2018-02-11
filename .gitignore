@@ -1,6 +1,6 @@
 node_modules/
 npm-debug.log
 # 忽略mm文件夹下所有内容
-mm/**/*
+dest/**/*
 # 有.gitkeep的文件夹不忽略
 !.gitkeep
