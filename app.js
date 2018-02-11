@@ -53,7 +53,6 @@ async function getPic(url) {
     const dir = $('.article h2').text()
     try {
         console.log(`创建文件夹:${dir}`)
-        await fs.mkdir(path.join(__dirname, desDir))
         await fs.mkdir(path.join(__dirname, desDir, dir))
     } catch(e) {
         if (e && e.code === 'EEXIST') {
@@ -86,7 +85,7 @@ function download(dir, imgUrl) {
     const writeStream = fs.createWriteStream(path.join(__dirname, desDir, dir, filename))
     // writeStream 错误捕获
     writeStream.on('error', function(err) {
-        console.log('文件生成失败！相关失败信息：', err)
+        console.error('文件生成失败！相关失败信息：', err)
     })
     // writeStream 完成捕获
     writeStream.on('finish', function() {
@@ -116,7 +115,18 @@ function sleep(time) {
  * @async
  * @function init
  */
-async function init(){
+async function init() {
+    // 创建目的地目录
+    try {
+        console.log(`创建文件夹:${desDir}`)
+        await fs.mkdir(path.join(__dirname, desDir))
+    } catch(e) {
+        if (e && e.code === 'EEXIST') {
+            console.log('目录已存在：', e.path)
+        } else {
+            console.error(e)
+        }
+    }
     let urls = await getUrl(homeURL)
     console.log('图片总数：', urls.length)
     for (let url of urls) {
