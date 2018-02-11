@@ -1,3 +1,4 @@
+
 const request = require('superagent')
 const cheerio = require('cheerio')
 const fs = require('fs-extra')
@@ -11,7 +12,7 @@ let url = 'http://www.mmjpg.com/tag/meitui/'
  * @param  {Numer} max      最大整数
  * @return {Number}         最终输出的随机整数
  */
-function random(min, max) {
+function rInt(min, max) {
 	let gap = max - min
 	return Math.floor(min + Math.random() * (gap + 1))
 }
@@ -39,7 +40,7 @@ async function getUrl() {
 async function getPic(url) {
     const res = await request.get(url)
     const $ = cheerio.load(res.text)
-    // 以图集名称来分目录  
+    // 以图集名称来分目录
     const dir = $('.article h2').text()
     console.log(`创建${dir}文件夹`)
     await fs.mkdir(path.join(__dirname, '/mm', dir))
@@ -51,14 +52,14 @@ async function getPic(url) {
         // 获取图片的真实地址
         const imgUrl = _$('#content img').attr('src')
         download(dir, imgUrl)
-        await sleep(random(1000, 5000))  
+        await sleep(rInt(1000, 5000))
     }
 }
 
 // 下载图片
 function download(dir, imgUrl) {
     console.log(`正在下载${imgUrl}`)
-    const filename = imgUrl.split('/').pop()  
+    const filename = imgUrl.split('/').pop()
     const req = request.get(imgUrl)
         .set({ 'Referer': 'http://www.mmjpg.com' })
     req.pipe(fs.createWriteStream(path.join(__dirname, 'mm', dir, filename)))
