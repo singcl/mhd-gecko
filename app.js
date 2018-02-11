@@ -4,7 +4,7 @@ const cheerio = require('cheerio')
 const fs = require('fs-extra')
 const path = require('path')
 
-let homeURL = 'http://www.mmjpg.com/tag/meitui/'
+let homeURL = 'http://www.mmjpg.com/tag/disi/'
 let desDir = 'dest'
 
 /**
@@ -28,7 +28,7 @@ function rInt(min, max) {
  */
 async function getUrl(url) {
     let linkArr = []
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 3; i++) {
         const res = await request.get(url + i)
         const $ = cheerio.load(res.text)
         $('.pic li').each(function (i, elem) {
@@ -100,7 +100,13 @@ async function download(dir, imgUrl) {
                 writeStream.on('finish', function() {
                     console.log(`下载完成: ${imgUrl}`)
                 })
-                const req = request.get(imgUrl).set({ 'Referer': 'http://www.mmjpg.com' })
+                const req = request.get(imgUrl).set({
+                    'Referer': 'http://www.mmjpg.com/mm',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+                })
+                .on('error', function(err) {
+                    console.log(err)
+                })
                 req.pipe(writeStream)
                 // sleep
                 await sleep(rInt(1000, 5000))
@@ -145,7 +151,7 @@ async function init() {
         }
     }
     let urls = await getUrl(homeURL)
-    console.log('图片总数：', urls.length)
+    console.log('图片集总数：', urls.length)
     for (let url of urls) {
         await getPic(url)
     }
