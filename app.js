@@ -68,31 +68,48 @@ async function getPic(url) {
         const _$ = cheerio.load(data.text)
         // 获取图片的真实地址
         const imgUrl = _$('#content img').attr('src')
-        download(dir, imgUrl)
-        await sleep(rInt(1000, 5000))
+        await download(dir, imgUrl)
     }
 }
 
 /**
  * 图片下载
  *
+ * @async
+ * @function download
  * @param {String} 图片要保存的目录
  * @param {String} 要下载的图片路径
  */
-function download(dir, imgUrl) {
-    console.log(`正在下载: ${imgUrl}`)
+async function download(dir, imgUrl) {
     const filename = imgUrl.split('/').pop()
-    const writeStream = fs.createWriteStream(path.join(__dirname, desDir, dir, filename))
-    // writeStream 错误捕获
-    writeStream.on('error', function(err) {
-        console.error('文件生成失败！相关失败信息：', err)
+    const filePath = path.join(__dirname, desDir, dir, filename)
+    await fs.open(filePath, 'r').then((fd) => {
+        // 文件存在
+        console.log('文件存在:', filePath)
+    }).catch(async (err) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                console.log('文件不存在:', filePath)
+                console.log(`开始下载: ${imgUrl}`)
+                const writeStream = fs.createWriteStream(filePath)
+                // writeStream 错误捕获
+                writeStream.on('error', function(err) {
+                    console.error('文件生成失败！相关失败信息：', err)
+                })
+                // writeStream 完成捕获
+                writeStream.on('finish', function() {
+                    console.log(`下载完成: ${imgUrl}`)
+                })
+                const req = request.get(imgUrl).set({ 'Referer': 'http://www.mmjpg.com' })
+                req.pipe(writeStream)
+                // sleep
+                await sleep(rInt(1000, 5000))
+                return
+            }
+            // 其他错误
+            throw err
+        }
     })
-    // writeStream 完成捕获
-    writeStream.on('finish', function() {
-        console.log(`下载完成: ${imgUrl}`)
-    })
-    const req = request.get(imgUrl).set({ 'Referer': 'http://www.mmjpg.com' })
-    req.pipe(writeStream)
 }
 
 /**
