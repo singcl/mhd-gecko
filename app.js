@@ -89,7 +89,7 @@ async function download(dir, imgUrl) {
     }).catch(async (err) => {
         if (err) {
             if (err.code === 'ENOENT') {
-                console.log('文件不存在:', filePath)
+                console.log('该文件不存在，即将下载...', filePath)
                 console.log(`开始下载: ${imgUrl}`)
                 const writeStream = fs.createWriteStream(filePath)
                 // writeStream 错误捕获
