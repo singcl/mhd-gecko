@@ -1,11 +1,12 @@
-
+// superagent文档：http://visionmedia.github.io/superagent/#test-documentation
+// Promise and Generator support: SuperAgent's request is a "thenable" object that's compatible with JavaScript promises and async/await syntax. Do not call .end() if you're using promises.
 const request = require('superagent')
 const cheerio = require('cheerio')
 const fs = require('fs-extra')
 const path = require('path')
 
 let homeURL = 'http://www.mmjpg.com/tag/disi/'
-let desDir = 'dest'
+let desDir = 'disi'
 
 /**
  * 底层基本函数：随机产生[min, max]区间的整数
@@ -100,14 +101,16 @@ async function download(dir, imgUrl) {
                 writeStream.on('finish', function() {
                     console.log(`下载完成: ${imgUrl}`)
                 })
-                const req = request.get(imgUrl).set({
+                const options = {
                     'Referer': 'http://www.mmjpg.com/mm',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
-                })
+                }
+                request.get(imgUrl)
+                .set(options)
                 .on('error', function(err) {
                     console.log(err)
                 })
-                req.pipe(writeStream)
+                .pipe(writeStream)
                 // sleep
                 await sleep(rInt(1000, 5000))
                 return
