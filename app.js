@@ -4,6 +4,7 @@ const request = require('superagent')
 const cheerio = require('cheerio')
 const fs = require('fs-extra')
 const path = require('path')
+const Promise = require('@singcl/promise')
 
 let homeURL = 'http://www.mmjpg.com/tag/disi/'
 let desDir = 'disi'
