@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node app"
+    "build": "node app",
+    "lint": "eslint --fix src"
   },
   "keywords": [
     "spider",
@@ -14,11 +15,15 @@
   "author": "singcl",
   "license": "ISC",
   "dependencies": {
+    "@singcl/promise": "^0.1.1",
     "cheerio": "^1.0.0-rc.2",
     "fs-extra": "^5.0.0",
     "superagent": "^3.8.2"
   },
   "devDependencies": {
     "eslint": "^4.17.0"
+  },
+  "engines": {
+    "node": ">=7.6.0"
   }
 }

@@ -1,11 +1,13 @@
-
+// superagent文档：http://visionmedia.github.io/superagent/#test-documentation
+// Promise and Generator support: SuperAgent's request is a "thenable" object that's compatible with JavaScript promises and async/await syntax. Do not call .end() if you're using promises.
 const request = require('superagent')
 const cheerio = require('cheerio')
 const fs = require('fs-extra')
 const path = require('path')
+const Promise = require('@singcl/promise')
 
-let homeURL = 'http://www.mmjpg.com/tag/meitui/'
-let desDir = 'dest'
+let homeURL = 'http://www.mmjpg.com/tag/disi/'
+let desDir = 'disi'
 
 /**
  * 底层基本函数：随机产生[min, max]区间的整数
@@ -28,7 +30,7 @@ function rInt(min, max) {
  */
 async function getUrl(url) {
     let linkArr = []
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 3; i++) {
         const res = await request.get(url + i)
         const $ = cheerio.load(res.text)
         $('.pic li').each(function (i, elem) {
@@ -89,7 +91,7 @@ async function download(dir, imgUrl) {
     }).catch(async (err) => {
         if (err) {
             if (err.code === 'ENOENT') {
-                console.log('该文件不存在，即将下载...', filePath)
+                console.log('New IMG，即将下载...', filePath)
                 console.log(`开始下载: ${imgUrl}`)
                 const writeStream = fs.createWriteStream(filePath)
                 // writeStream 错误捕获
@@ -100,8 +102,16 @@ async function download(dir, imgUrl) {
                 writeStream.on('finish', function() {
                     console.log(`下载完成: ${imgUrl}`)
                 })
-                const req = request.get(imgUrl).set({ 'Referer': 'http://www.mmjpg.com' })
-                req.pipe(writeStream)
+                const options = {
+                    'Referer': 'http://www.mmjpg.com/mm',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+                }
+                request.get(imgUrl)
+                .set(options)
+                .on('error', function(err) {
+                    console.log(err)
+                })
+                .pipe(writeStream)
                 // sleep
                 await sleep(rInt(1000, 5000))
                 return
@@ -145,7 +155,7 @@ async function init() {
         }
     }
     let urls = await getUrl(homeURL)
-    console.log('图片总数：', urls.length)
+    console.log('图片集总数：', urls.length)
     for (let url of urls) {
         await getPic(url)
     }
